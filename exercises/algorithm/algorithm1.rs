@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -43,6 +42,9 @@ impl<T> LinkedList<T> {
             end: None,
         }
     }
+}
+
+impl<T: Clone + std::cmp::PartialOrd> LinkedList<T> {
 
     pub fn add(&mut self, obj: T) {
         let mut node = Box::new(Node::new(obj));
@@ -69,15 +71,37 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+	pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self {
+        let mut merged_list = LinkedList::<T>::new();
+        let mut node_a = list_a.start.take();
+        let mut node_b = list_b.start.take();
+
+        while let (Some(a), Some(b)) = (node_a, node_b) {
+            let val_a = unsafe { &a.as_ref().val };
+            let val_b = unsafe { &b.as_ref().val };
+
+            if val_a <= val_b {
+                merged_list.add(val_a.clone());
+                node_a = unsafe { a.as_ref().next };
+            } else {
+                merged_list.add(val_b.clone());
+                node_b = unsafe { b.as_ref().next };
+            }
         }
-	}
+
+        // 将剩余节点加入到 merged_list 中
+        while let Some(a) = node_a {
+            merged_list.add(unsafe { a.as_ref().val.clone() });
+            node_a = unsafe { a.as_ref().next };
+        }
+
+        while let Some(b) = node_b {
+            merged_list.add(unsafe { b.as_ref().val.clone() });
+            node_b = unsafe { b.as_ref().next };
+        }
+
+        merged_list
+    }
 }
 
 impl<T> Display for LinkedList<T>

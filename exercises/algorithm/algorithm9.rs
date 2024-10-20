@@ -1,9 +1,3 @@
-/*
-	heap
-	This question requires you to implement a binary heap function
-*/
-// I AM NOT DONE
-
 use std::cmp::Ord;
 use std::default::Default;
 
@@ -23,7 +17,7 @@ where
     pub fn new(comparator: fn(&T, &T) -> bool) -> Self {
         Self {
             count: 0,
-            items: vec![T::default()],
+            items: vec![T::default()], // 使用哨兵元素简化索引计算
             comparator,
         }
     }
@@ -37,7 +31,46 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count += 1;
+        self.swim(self.count); // 上浮调整新加入的元素
+    }
+
+    fn swim(&mut self, mut idx: usize) {
+        while idx > 1 {
+            let parent_idx = self.parent_idx(idx); // 提前计算父索引
+            if (self.comparator)(&self.items[idx], &self.items[parent_idx]) {
+                self.items.swap(idx, parent_idx);  // 此时只需可变借用
+            } else {
+                break;
+            }
+            idx = parent_idx;  // 更新 idx 为 parent_idx
+        }
+    }
+    
+    pub fn next(&mut self) -> Option<T> {
+        if self.is_empty() {
+            return None;
+        }
+        // 交换堆顶和最后一个元素
+        self.items.swap(1, self.count);
+        let result = self.items.pop(); // 移除最后一个元素（即之前的堆顶）
+        self.count -= 1;
+        if !self.is_empty() {
+            self.sink(1); // 下沉调整
+        }
+        result
+    }
+
+    fn sink(&mut self, mut idx: usize) {
+        while self.children_present(idx) {
+            let smallest_child = self.smallest_child_idx(idx);
+            if !(self.comparator)(&self.items[smallest_child], &self.items[idx]) {
+                break;
+            }
+            self.items.swap(idx, smallest_child);
+            idx = smallest_child;
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -57,8 +90,13 @@ where
     }
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left = self.left_child_idx(idx);
+        let right = self.right_child_idx(idx);
+        if right <= self.count && (self.comparator)(&self.items[right], &self.items[left]) {
+            right
+        } else {
+            left
+        }
     }
 }
 
@@ -84,8 +122,7 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        self.next()
     }
 }
 
@@ -116,6 +153,7 @@ impl MaxHeap {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_empty_heap() {
         let mut heap = MaxHeap::new::<i32>();
